@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}Profile - BioGate{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow border-0 rounded-4">
+            <div class="card-header bg-primary text-white py-3">
+                <h4 class="mb-0"><i class="bi bi-person-badge me-2"></i> User Profile</h4>
+            </div>
+            <div class="card-body p-4">
+                <div class="row align-items-center">
+                    <div class="col-md-4 text-center mb-4 mb-md-0">
+                        <div class="avatar-circle bg-light d-flex align-items-center justify-content-center mx-auto mb-3 shadow-sm" style="width: 120px; height: 120px; border-radius: 50%;">
+                            <i class="bi bi-person text-secondary" style="font-size: 4rem;"></i>
+                        </div>
+                        <h5 class="fw-bold">{{ user.name }}</h5>
+                        <span class="badge bg-{{ 'danger' if user.role == 'admin' else ('success' if user.role == 'staff' else 'info') }} text-uppercase rounded-pill px-3">{{ user.role }}</span>
+                    </div>
+                    <div class="col-md-8">
+                        <h6 class="text-uppercase text-muted fw-bold mb-3 border-bottom pb-2">Account Details</h6>
+                        <ul class="list-group list-group-flush mb-4">
+                            <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                <div>
+                                    <i class="bi bi-envelope text-muted me-2"></i> <strong>Email</strong>
+                                </div>
+                                <span class="text-secondary">{{ user.email }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                <div>
+                                    <i class="bi bi-calendar-date text-muted me-2"></i> <strong>Joined</strong>
+                                </div>
+                                <span class="text-secondary">{{ user.created_at.strftime('%Y-%m-%d') if user.created_at else 'Unknown' }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                <div>
+                                    <i class="bi bi-person-bounding-box text-muted me-2"></i> <strong>Face Enrolled</strong>
+                                </div>
+                                <span>
+                                    {% if user.face_encoding_path %}
+                                        <i class="bi bi-check-circle-fill text-success"></i> Yes
+                                    {% else %}
+                                        <i class="bi bi-x-circle-fill text-danger"></i> No
+                                    {% endif %}
+                                </span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card shadow border-0 rounded-4 mt-4">
+            <div class="card-header bg-white py-3 border-bottom-0">
+                <h5 class="mb-0 fw-bold"><i class="bi bi-clock-history me-2 text-primary"></i> Recent Attendance</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-4">Date & Time</th>
+                                <th>Method</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for record in user.attendances|sort(attribute='timestamp', reverse=true) %}
+                                {% if loop.index <= 5 %}
+                                <tr>
+                                    <td class="ps-4">{{ record.timestamp.strftime('%b %d, %Y - %I:%M %p') }}</td>
+                                    <td>
+                                        {% if record.method == 'face' %}
+                                            <span class="badge bg-secondary"><i class="bi bi-camera me-1"></i> Face</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary"><i class="bi bi-keyboard me-1"></i> Manual</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if record.status == 'present' %}
+                                            <span class="badge bg-success rounded-pill px-3">Present</span>
+                                        {% else %}
+                                            <span class="badge bg-warning text-dark rounded-pill px-3">Late</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endif %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="3" class="text-center py-4 text-muted">No attendance records found.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

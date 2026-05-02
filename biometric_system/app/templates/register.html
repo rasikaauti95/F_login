@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block title %}Sign Up - BioGate{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow-lg border-0 rounded-4 overflow-hidden mt-4">
+            <div class="card-header bg-primary text-white text-center py-4">
+                <i class="bi bi-person-plus display-4 mb-2"></i>
+                <h3 class="fw-bold mb-0">Create an Account</h3>
+                <p class="mb-0 text-white-50">Join BioGate and set up your biometric login</p>
+            </div>
+            
+            <div class="card-body p-4 p-md-5 bg-white">
+                <form action="{{ url_for('auth.register') }}" method="POST">
+                    
+                    <h5 class="fw-bold mb-4 text-primary"><i class="bi bi-person-lines-fill me-2"></i> User Information</h5>
+                    
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label for="name" class="form-label text-muted fw-semibold">Full Name</label>
+                            <input type="text" class="form-control form-control-lg bg-light border-0" id="name" name="name" required placeholder="John Doe">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="email" class="form-label text-muted fw-semibold">Email Address</label>
+                            <input type="email" class="form-control form-control-lg bg-light border-0" id="email" name="email" required placeholder="john@example.com">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-5">
+                        <label for="role" class="form-label text-muted fw-semibold">I am a...</label>
+                        <select class="form-select form-select-lg bg-light border-0" id="role" name="role">
+                            <option value="student" selected>Student</option>
+                            <option value="staff">Staff</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                        <small class="text-muted mt-1 d-block">Note: Admin registration is open for demonstration purposes.</small>
+                    </div>
+
+                    <h5 class="fw-bold mb-3 text-primary"><i class="bi bi-camera me-2"></i> Biometric Enrollment</h5>
+                    
+                    <div class="card bg-light border-0 rounded-4 mb-4">
+                        <div class="card-body p-4">
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox" id="capture_face" name="capture_face" checked style="transform: scale(1.3); margin-right: 10px; margin-top: 5px;">
+                                <label class="form-check-label fw-bold" for="capture_face">Enable Face Login</label>
+                            </div>
+                            
+                            <div id="camera-container" class="text-center">
+                                <div class="position-relative d-inline-block rounded overflow-hidden shadow-sm" style="background: #000; width: 100%; max-width: 400px; aspect-ratio: 4/3;">
+                                    <video id="webcam-preview" autoplay playsinline class="w-100 h-100 object-fit-cover"></video>
+                                    <div class="position-absolute top-50 start-50 translate-middle pointer-events-none" style="border: 2px dashed rgba(255,255,255,0.5); width: 60%; height: 70%; border-radius: 50%;"></div>
+                                </div>
+                                <p class="text-muted small mt-2"><i class="bi bi-info-circle me-1"></i> Position your face within the oval.</p>
+                                <input type="hidden" id="base64_image" name="base64_image">
+                            </div>
+                            
+                            <div id="camera-instructions" class="alert alert-info border-0 rounded-3 d-flex align-items-start mb-0" style="display: none !important;">
+                                <i class="bi bi-info-circle-fill fs-4 me-3 mt-1"></i>
+                                <div>
+                                    <h6 class="fw-bold mb-1">Webcam Required</h6>
+                                    <p class="mb-0 small">Face login disabled. You can still create an account.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid mt-5">
+                        <button type="submit" class="btn btn-primary btn-lg rounded-pill shadow transition-up">
+                            <i class="bi bi-person-plus-fill me-2"></i> Sign Up
+                        </button>
+                    </div>
+                    
+                    <div class="text-center mt-4">
+                        <p class="text-muted">Already have an account? <a href="{{ url_for('auth.login') }}" class="text-decoration-none fw-bold">Login here</a></p>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const captureToggle = document.getElementById('capture_face');
+        const cameraContainer = document.getElementById('camera-container');
+        const cameraInfo = document.getElementById('camera-instructions');
+        const video = document.getElementById('webcam-preview');
+        const base64Input = document.getElementById('base64_image');
+        const form = document.querySelector('form');
+        
+        let stream = null;
+
+        async function startCamera() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                video.srcObject = stream;
+            } catch (err) {
+                console.error("Error accessing webcam:", err);
+                cameraContainer.innerHTML = '<div class="alert alert-danger">Could not access webcam. Please ensure permissions are granted.</div>';
+            }
+        }
+
+        function stopCamera() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                video.srcObject = null;
+            }
+        }
+
+        captureToggle.addEventListener('change', function() {
+            if(this.checked) {
+                cameraContainer.style.display = 'block';
+                cameraInfo.style.setProperty('display', 'none', 'important');
+                startCamera();
+            } else {
+                cameraContainer.style.display = 'none';
+                cameraInfo.style.setProperty('display', 'flex', 'important');
+                stopCamera();
+            }
+        });
+
+        // Start camera initially if checked
+        if (captureToggle.checked) {
+            startCamera();
+        }
+
+        form.addEventListener('submit', function(e) {
+            if (captureToggle.checked && video.videoWidth > 0) {
+                // Create a canvas to draw the video frame
+                const canvas = document.createElement('canvas');
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                const context = canvas.getContext('2d');
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                
+                // Convert to base64 and set hidden input
+                base64Input.value = canvas.toDataURL('image/jpeg', 0.9);
+            }
+        });
+    });
+</script>
+{% endblock %}

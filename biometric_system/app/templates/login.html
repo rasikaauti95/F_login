@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block title %}Login - BioGate{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center align-items-center min-vh-75">
+    <div class="col-md-5">
+        <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
+            <div class="card-header bg-primary text-white text-center py-4">
+                <i class="bi bi-person-bounding-box display-4 mb-2"></i>
+                <h3 class="fw-bold mb-0">Welcome Back</h3>
+                <p class="mb-0 text-white-50">Log in to access your dashboard</p>
+            </div>
+            
+            <div class="card-body p-4 p-md-5 bg-white">
+                <ul class="nav nav-pills nav-justified mb-4 custom-pills" id="loginTab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active fw-semibold" id="face-tab" data-bs-toggle="pill" data-bs-target="#face-login" type="button" role="tab">
+                            <i class="bi bi-camera me-1"></i> Face Login
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link fw-semibold" id="manual-tab" data-bs-toggle="pill" data-bs-target="#manual-login" type="button" role="tab">
+                            <i class="bi bi-keyboard me-1"></i> Manual
+                        </button>
+                    </li>
+                </ul>
+                
+                <div class="tab-content" id="loginTabContent">
+                    <!-- Face Login Tab -->
+                    <div class="tab-pane fade show active" id="face-login" role="tabpanel">
+                        <div class="text-center py-4">
+                            <div id="camera-container" class="mb-4 mx-auto">
+                                <div class="position-relative d-inline-block rounded overflow-hidden shadow-sm" style="background: #000; width: 100%; max-width: 300px; aspect-ratio: 4/3;">
+                                    <video id="webcam-preview" autoplay playsinline class="w-100 h-100 object-fit-cover"></video>
+                                    <div class="position-absolute top-50 start-50 translate-middle pointer-events-none" style="border: 2px dashed rgba(255,255,255,0.5); width: 60%; height: 70%; border-radius: 50%;"></div>
+                                </div>
+                                <p class="text-muted small mt-2">Position your face clearly in front of the camera.</p>
+                            </div>
+                            
+                            <form action="{{ url_for('auth.face_login') }}" method="POST" id="face-login-form">
+                                <input type="hidden" id="base64_image" name="base64_image">
+                                <button type="submit" class="btn btn-primary btn-lg w-100 rounded-pill shadow-sm transition-up">
+                                    <i class="bi bi-camera-video-fill me-2"></i> Scan Face & Login
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <!-- Manual Login Tab -->
+                    <div class="tab-pane fade" id="manual-login" role="tabpanel">
+                        <form action="{{ url_for('auth.login') }}" method="POST">
+                            <div class="mb-4">
+                                <label for="email" class="form-label text-muted fw-semibold">Email address</label>
+                                <div class="input-group input-group-lg">
+                                    <span class="input-group-text bg-light border-end-0"><i class="bi bi-envelope text-muted"></i></span>
+                                    <input type="email" class="form-control bg-light border-start-0 ps-0 focus-none" id="email" name="email" placeholder="name@example.com" required>
+                                </div>
+                            </div>
+                            
+                            <!-- Note: Password is omitted for simplicity as per requirements, but could be added -->
+                            
+                            <button type="submit" class="btn btn-dark btn-lg w-100 rounded-pill shadow-sm transition-up">
+                                <i class="bi bi-box-arrow-in-right me-2"></i> Login
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card-footer bg-light text-center py-3 border-0">
+                <p class="text-muted mb-1">Don't have an account? <a href="{{ url_for('auth.register') }}" class="text-decoration-none fw-bold">Sign up here</a></p>
+                <small class="text-muted">Having trouble? Contact your administrator.</small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const video = document.getElementById('webcam-preview');
+        const base64Input = document.getElementById('base64_image');
+        const form = document.getElementById('face-login-form');
+        const faceTab = document.getElementById('face-tab');
+        const manualTab = document.getElementById('manual-tab');
+        
+        let stream = null;
+
+        async function startCamera() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                video.srcObject = stream;
+            } catch (err) {
+                console.error("Error accessing webcam:", err);
+                document.getElementById('camera-container').innerHTML = '<div class="alert alert-danger">Could not access webcam. Please ensure permissions are granted.</div>';
+            }
+        }
+
+        function stopCamera() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                video.srcObject = null;
+            }
+        }
+
+        // Start camera initially
+        startCamera();
+
+        // Handle tab switching
+        if (faceTab && manualTab) {
+            faceTab.addEventListener('shown.bs.tab', function (e) {
+                startCamera();
+            });
+            
+            manualTab.addEventListener('shown.bs.tab', function (e) {
+                stopCamera();
+            });
+        }
+
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                if (video && video.videoWidth > 0) {
+                    // Create a canvas to draw the video frame
+                    const canvas = document.createElement('canvas');
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    const context = canvas.getContext('2d');
+                    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    
+                    // Convert to base64 and set hidden input
+                    if (base64Input) {
+                        base64Input.value = canvas.toDataURL('image/jpeg', 0.9);
+                    }
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

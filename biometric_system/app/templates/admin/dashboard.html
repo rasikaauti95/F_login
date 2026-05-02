@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - BioGate{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold mb-0">Admin Dashboard</h2>
+    <div>
+        <a href="{{ url_for('attendance.live') }}" class="btn btn-outline-primary me-2 shadow-sm rounded-pill px-4">
+            <i class="bi bi-camera-video me-1"></i> Live Mode
+        </a>
+        <a href="{{ url_for('admin.register') }}" class="btn btn-primary shadow-sm rounded-pill px-4">
+            <i class="bi bi-person-plus me-1"></i> Register User
+        </a>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-4 mb-3 mb-md-0">
+        <div class="card border-0 shadow-sm rounded-4 bg-primary text-white h-100 p-3">
+            <div class="card-body d-flex align-items-center">
+                <div class="flex-shrink-0 bg-white bg-opacity-25 rounded-circle p-3 me-3">
+                    <i class="bi bi-people fs-2"></i>
+                </div>
+                <div>
+                    <h6 class="mb-0 fw-normal text-white-50">Total Users</h6>
+                    <h2 class="mb-0 fw-bold">{{ users_count }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3 mb-md-0">
+        <div class="card border-0 shadow-sm rounded-4 bg-success text-white h-100 p-3">
+            <div class="card-body d-flex align-items-center">
+                <div class="flex-shrink-0 bg-white bg-opacity-25 rounded-circle p-3 me-3">
+                    <i class="bi bi-check2-circle fs-2"></i>
+                </div>
+                <div>
+                    <h6 class="mb-0 fw-normal text-white-50">Total Attendances</h6>
+                    <h2 class="mb-0 fw-bold">{{ attendance_count }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm rounded-4 bg-info text-white h-100 p-3">
+            <div class="card-body d-flex align-items-center">
+                <div class="flex-shrink-0 bg-white bg-opacity-25 rounded-circle p-3 me-3">
+                    <i class="bi bi-camera fs-2"></i>
+                </div>
+                <div>
+                    <h6 class="mb-0 fw-normal text-white-50">System Status</h6>
+                    <h4 class="mb-0 fw-bold">Online</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0 rounded-4 mb-5">
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 fw-bold text-dark"><i class="bi bi-list-ul me-2 text-primary"></i> Registered Users</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-4">ID</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Face Enrolled</th>
+                        <th>Joined</th>
+                        <th class="text-end pe-4">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr>
+                        <td class="ps-4 text-muted">#{{ user.id }}</td>
+                        <td class="fw-semibold">{{ user.name }}</td>
+                        <td>{{ user.email }}</td>
+                        <td>
+                            <span class="badge bg-{{ 'danger' if user.role == 'admin' else ('success' if user.role == 'staff' else 'info') }} rounded-pill px-2">
+                                {{ user.role }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if user.face_encoding_path %}
+                                <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-3 border border-success"><i class="bi bi-check-circle me-1"></i> Yes</span>
+                            {% else %}
+                                <span class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-3 border border-danger"><i class="bi bi-x-circle me-1"></i> No</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-muted small">{{ user.created_at.strftime('%Y-%m-%d') }}</td>
+                        <td class="text-end pe-4">
+                            {% if user.id != current_user.id %}
+                            <form action="{{ url_for('admin.delete_user', user_id=user.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this user? All their attendance data will also be deleted.');">
+                                <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill" title="Delete User">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center py-5 text-muted">
+                            <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                            No users found.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
