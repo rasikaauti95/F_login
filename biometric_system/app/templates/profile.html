@@ -1,99 +1,420 @@
 {% extends "base.html" %}
 
-{% block title %}Profile - BioGate{% endblock %}
+{% block title %}Student Profile - {{ user.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary-gradient: linear-gradient(135deg, #6366f1 0%, #4338ca 100%);
+        --secondary-gradient: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+        --accent-gradient: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        --success-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        --danger-gradient: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        --sidebar-bg: #ffffff;
+        --card-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
+        --glass-bg: rgba(255, 255, 255, 0.8);
+    }
+
+    body {
+        background-color: #f8fafc;
+    }
+
+    .profile-sidebar {
+        background: var(--sidebar-bg);
+        border-radius: 2rem;
+        box-shadow: var(--card-shadow);
+        overflow: hidden;
+        position: sticky;
+        top: 2rem;
+        border: 1px solid rgba(226, 232, 240, 0.8);
+        transition: all 0.3s ease;
+    }
+
+    .avatar-wrapper {
+        background: var(--primary-gradient);
+        padding: 4rem 2rem;
+        text-align: center;
+        color: white;
+        position: relative;
+    }
+
+    .avatar-wrapper::after {
+        content: '';
+        position: absolute;
+        bottom: -1px;
+        left: 0;
+        right: 0;
+        height: 50px;
+        background: linear-gradient(to top, white, transparent);
+    }
+
+    .avatar-circle-lg {
+        width: 120px;
+        height: 120px;
+        border-radius: 35% 65% 65% 35% / 35% 35% 65% 65%;
+        background: rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(12px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+        font-weight: 800;
+        margin: 0 auto 1.5rem;
+        border: 6px solid rgba(255, 255, 255, 0.4);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+        animation: morph 8s ease-in-out infinite;
+    }
+
+    @keyframes morph {
+        0%, 100% { border-radius: 35% 65% 65% 35% / 35% 35% 65% 65%; }
+        50% { border-radius: 65% 35% 35% 65% / 65% 65% 35% 35%; }
+    }
+
+    .status-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.6rem;
+        padding: 0.4rem 1rem;
+        border-radius: 2rem;
+        font-size: 0.85rem;
+        font-weight: 700;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    .status-success { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
+    .status-primary { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+    .status-secondary { background: #f8fafc; color: #475569; border: 1px solid #e2e8f0; }
+    .status-dot { width: 10px; height: 10px; border-radius: 50%; background: currentColor; }
+    .status-dot-pulse { animation: pulse 2s infinite; }
+
+    @keyframes pulse {
+        0% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.5); opacity: 0; }
+        100% { transform: scale(1); opacity: 0; }
+    }
+
+    .metric-card {
+        background: white;
+        border-radius: 1.5rem;
+        padding: 1.5rem;
+        box-shadow: var(--card-shadow);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 1px solid #f1f5f9;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .metric-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
+    }
+
+    .metric-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.75rem;
+        margin-bottom: 1.25rem;
+        background: #f8fafc;
+        transition: all 0.3s ease;
+    }
+
+    .metric-card:hover .metric-icon {
+        transform: scale(1.1) rotate(5deg);
+    }
+
+    .attendance-card {
+        background: white;
+        border-radius: 2rem;
+        box-shadow: var(--card-shadow);
+        border: 1px solid rgba(226, 232, 240, 0.8);
+        overflow: hidden;
+    }
+
+    .table thead th {
+        background: #fcfdfe;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        font-weight: 800;
+        letter-spacing: 0.1em;
+        color: #94a3b8;
+        padding: 1.25rem 1rem;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .table tbody td {
+        padding: 1.5rem 1rem;
+        vertical-align: middle;
+        color: #1e293b;
+        font-size: 0.95rem;
+    }
+
+    .badge-status {
+        padding: 0.6rem 1.2rem;
+        border-radius: 1rem;
+        font-weight: 700;
+        font-size: 0.75rem;
+        letter-spacing: 0.02em;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .badge-present { background: #dcfce7; color: #166534; }
+    .badge-late { background: #fef9c3; color: #854d0e; }
+    .badge-absent { background: #fee2e2; color: #991b1b; }
+
+    .pagination .page-link {
+        border-radius: 12px;
+        margin: 0 0.3rem;
+        padding: 0.6rem 1rem;
+        color: #64748b;
+        border: 1px solid #e2e8f0;
+        font-weight: 600;
+        transition: all 0.2s;
+    }
+
+    .pagination .page-item.active .page-link {
+        background: var(--primary-gradient);
+        border: none;
+        box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.3);
+    }
+
+    .filter-btn {
+        border-radius: 1rem;
+        padding: 0.6rem 1.25rem;
+        font-weight: 600;
+        font-size: 0.9rem;
+        transition: all 0.3s;
+        border: 1px solid #e2e8f0;
+    }
+
+    .filter-btn.active {
+        background: #1e293b;
+        color: white;
+        border-color: #1e293b;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    }
+
+    .student-info-item {
+        padding: 1rem;
+        border-radius: 1rem;
+        transition: background 0.2s;
+    }
+
+    .student-info-item:hover {
+        background: #f8fafc;
+    }
+
+    .student-info-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f1f5f9;
+        color: #64748b;
+        font-size: 1.2rem;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-8">
-        <div class="card shadow border-0 rounded-4">
-            <div class="card-header bg-primary text-white py-3">
-                <h4 class="mb-0"><i class="bi bi-person-badge me-2"></i> User Profile</h4>
-            </div>
-            <div class="card-body p-4">
-                <div class="row align-items-center">
-                    <div class="col-md-4 text-center mb-4 mb-md-0">
-                        <div class="avatar-circle bg-light d-flex align-items-center justify-content-center mx-auto mb-3 shadow-sm" style="width: 120px; height: 120px; border-radius: 50%;">
-                            <i class="bi bi-person text-secondary" style="font-size: 4rem;"></i>
-                        </div>
-                        <h5 class="fw-bold">{{ user.name }}</h5>
-                        <span class="badge bg-{{ 'danger' if user.role == 'admin' else ('success' if user.role == 'staff' else 'info') }} text-uppercase rounded-pill px-3">{{ user.role }}</span>
+<div class="container py-5">
+    <div class="row g-5">
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <div class="profile-sidebar">
+                <div class="avatar-wrapper">
+                    <div class="avatar-circle-lg">
+                        {{ user.name[:2].upper() }}
                     </div>
-                    <div class="col-md-8">
-                        <h6 class="text-uppercase text-muted fw-bold mb-3 border-bottom pb-2">Account Details</h6>
-                        <ul class="list-group list-group-flush mb-4">
-                            <li class="list-group-item d-flex justify-content-between align-items-center px-0">
-                                <div>
-                                    <i class="bi bi-envelope text-muted me-2"></i> <strong>Email</strong>
+                    <h3 class="fw-bold mb-1">{{ user.name }}</h3>
+                    <div class="status-indicator status-{{ status_class }} mx-auto mt-3">
+                        <span class="status-dot {{ 'status-dot-pulse' if status_class == 'success' }}"></span>
+                        {{ activity_status }}
+                    </div>
+                </div>
+                
+                <div class="p-4 pt-5">
+                    <div class="mb-5">
+                        <label class="text-muted small text-uppercase fw-bold mb-4 d-block" style="letter-spacing: 0.1em;">Student Profile</label>
+                        <div class="d-flex flex-column gap-2">
+                            <div class="student-info-item d-flex align-items-center">
+                                <div class="student-info-icon me-3">
+                                    <i class="bi bi-person-badge"></i>
                                 </div>
-                                <span class="text-secondary">{{ user.email }}</span>
-                            </li>
-                            <li class="list-group-item d-flex justify-content-between align-items-center px-0">
                                 <div>
-                                    <i class="bi bi-calendar-date text-muted me-2"></i> <strong>Joined</strong>
+                                    <div class="small text-muted">Roll Number</div>
+                                    <div class="fw-bold">{{ user.roll_number or 'N/A' }}</div>
                                 </div>
-                                <span class="text-secondary">{{ user.created_at.strftime('%Y-%m-%d') if user.created_at else 'Unknown' }}</span>
-                            </li>
-                            <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            </div>
+                            <div class="student-info-item d-flex align-items-center">
+                                <div class="student-info-icon me-3">
+                                    <i class="bi bi-diagram-3"></i>
+                                </div>
                                 <div>
-                                    <i class="bi bi-person-bounding-box text-muted me-2"></i> <strong>Face Enrolled</strong>
+                                    <div class="small text-muted">Department</div>
+                                    <div class="fw-bold text-truncate" style="max-width: 200px;">{{ user.department or 'N/A' }}</div>
                                 </div>
-                                <span>
-                                    {% if user.face_encoding_path %}
-                                        <i class="bi bi-check-circle-fill text-success"></i> Yes
-                                    {% else %}
-                                        <i class="bi bi-x-circle-fill text-danger"></i> No
-                                    {% endif %}
-                                </span>
-                            </li>
-                        </ul>
+                            </div>
+                            <div class="student-info-item d-flex align-items-center">
+                                <div class="student-info-icon me-3">
+                                    <i class="bi bi-mortarboard"></i>
+                                </div>
+                                <div>
+                                    <div class="small text-muted">Semester</div>
+                                    <div class="fw-bold">{{ user.semester or 'N/A' }}</div>
+                                </div>
+                            </div>
+                            <div class="student-info-item d-flex align-items-center">
+                                <div class="student-info-icon me-3">
+                                    <i class="bi bi-envelope"></i>
+                                </div>
+                                <div>
+                                    <div class="small text-muted">Email</div>
+                                    <div class="fw-bold text-truncate" style="max-width: 200px;">{{ user.email }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <div class="metric-card">
+                                <div class="metric-icon" style="color: #6366f1; background: #eef2ff;">
+                                    <i class="bi bi-lightning-charge"></i>
+                                </div>
+                                <div class="small text-muted fw-semibold">Total Logins</div>
+                                <div class="h3 fw-bold mb-0 mt-1">{{ total_logins }}</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="metric-card">
+                                <div class="metric-icon" style="color: #f59e0b; background: #fffbeb;">
+                                    <i class="bi bi-graph-up"></i>
+                                </div>
+                                <div class="small text-muted fw-semibold">This Week</div>
+                                <div class="h3 fw-bold mb-0 mt-1">{{ logins_this_week }}</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-        
-        <div class="card shadow border-0 rounded-4 mt-4">
-            <div class="card-header bg-white py-3 border-bottom-0">
-                <h5 class="mb-0 fw-bold"><i class="bi bi-clock-history me-2 text-primary"></i> Recent Attendance</h5>
+
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <div class="d-flex justify-content-between align-items-end mb-5">
+                <div>
+                    <h2 class="fw-bold mb-1">Attendance History</h2>
+                    <p class="text-muted mb-0">Monitor your daily login activity and status.</p>
+                </div>
+                <div class="btn-group p-1 bg-white rounded-4 shadow-sm border">
+                    <a href="{{ url_for('auth.profile', range='7days') }}" class="btn filter-btn {{ 'active' if time_range == '7days' else 'border-0' }}">7 Days</a>
+                    <a href="{{ url_for('auth.profile', range='30days') }}" class="btn filter-btn {{ 'active' if time_range == '30days' else 'border-0' }}">30 Days</a>
+                    <a href="{{ url_for('auth.profile', range='all') }}" class="btn filter-btn {{ 'active' if time_range == 'all' else 'border-0' }}">All Time</a>
+                </div>
             </div>
-            <div class="card-body p-0">
+
+            <div class="card attendance-card">
                 <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="table-light">
+                    <table class="table table-hover mb-0">
+                        <thead>
                             <tr>
-                                <th class="ps-4">Date & Time</th>
-                                <th>Method</th>
+                                <th>Date</th>
+                                <th>Login Time</th>
+                                <th>Session</th>
                                 <th>Status</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {% for record in user.attendances|sort(attribute='timestamp', reverse=true) %}
-                                {% if loop.index <= 5 %}
-                                <tr>
-                                    <td class="ps-4">{{ record.timestamp.strftime('%b %d, %Y - %I:%M %p') }}</td>
-                                    <td>
-                                        {% if record.method == 'face' %}
-                                            <span class="badge bg-secondary"><i class="bi bi-camera me-1"></i> Face</span>
-                                        {% else %}
-                                            <span class="badge bg-secondary"><i class="bi bi-keyboard me-1"></i> Manual</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        {% if record.status == 'present' %}
-                                            <span class="badge bg-success rounded-pill px-3">Present</span>
-                                        {% else %}
-                                            <span class="badge bg-warning text-dark rounded-pill px-3">Late</span>
-                                        {% endif %}
-                                    </td>
-                                </tr>
-                                {% endif %}
+                            {% for record in attendance_records %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="bg-light rounded-3 p-2 me-3 text-center" style="min-width: 50px;">
+                                            <div class="small text-muted text-uppercase fw-bold" style="font-size: 0.6rem;">{{ record.timestamp.strftime('%b') }}</div>
+                                            <div class="fw-bold fs-5">{{ record.timestamp.strftime('%d') }}</div>
+                                        </div>
+                                        <div class="fw-semibold">{{ record.timestamp.strftime('%a, %d %b %Y') }}</div>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if record.status == 'absent' %}
+                                    <span class="text-muted fw-bold">—</span>
+                                    {% else %}
+                                    <div class="d-flex align-items-center">
+                                        <i class="bi bi-clock me-2 text-primary"></i>
+                                        <span class="fw-bold">{{ record.timestamp.strftime('%I:%M %p') }}</span>
+                                    </div>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if record.timestamp.hour < 12 %}
+                                    <span class="badge bg-light text-primary border rounded-pill px-3 py-2"><i class="bi bi-sun-fill me-1"></i> Morning session</span>
+                                    {% else %}
+                                    <span class="badge bg-light text-warning border rounded-pill px-3 py-2"><i class="bi bi-moon-stars-fill me-1"></i> Afternoon session</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if record.status == 'present' %}
+                                    <span class="badge badge-status badge-present">PRESENT</span>
+                                    {% elif record.status == 'late' %}
+                                    <span class="badge badge-status badge-late">LATE</span>
+                                    {% else %}
+                                    <span class="badge badge-status badge-absent">ABSENT</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
                             {% else %}
-                                <tr>
-                                    <td colspan="3" class="text-center py-4 text-muted">No attendance records found.</td>
-                                </tr>
+                            <tr>
+                                <td colspan="4" class="text-center py-5">
+                                    <div class="py-5">
+                                        <div class="metric-icon mx-auto mb-4" style="width: 80px; height: 80px; font-size: 2.5rem; background: #f8fafc; color: #cbd5e1;">
+                                            <i class="bi bi-calendar-x"></i>
+                                        </div>
+                                        <h4 class="fw-bold text-slate-700">No records found</h4>
+                                        <p class="text-muted">There are no attendance logs for the selected period.</p>
+                                    </div>
+                                </td>
+                            </tr>
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
+
+                {% if pagination.pages > 1 %}
+                <div class="card-footer bg-white border-top py-4">
+                    <nav aria-label="Attendance pagination">
+                        <ul class="pagination justify-content-center mb-0">
+                            <li class="page-item {{ 'disabled' if not pagination.has_prev }}">
+                                <a class="page-link shadow-sm" href="{{ url_for('auth.profile', page=pagination.prev_num, range=time_range) if pagination.has_prev else '#' }}">
+                                    <i class="bi bi-chevron-left"></i>
+                                </a>
+                            </li>
+                            
+                            {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+                                {% if page_num %}
+                                    <li class="page-item {{ 'active' if page_num == pagination.page }}">
+                                        <a class="page-link shadow-sm" href="{{ url_for('auth.profile', page=page_num, range=time_range) }}">{{ page_num }}</a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled"><span class="page-link border-0">...</span></li>
+                                {% endif %}
+                            {% endfor %}
+
+                            <li class="page-item {{ 'disabled' if not pagination.has_next }}">
+                                <a class="page-link shadow-sm" href="{{ url_for('auth.profile', page=pagination.next_num, range=time_range) if pagination.has_next else '#' }}">
+                                    <i class="bi bi-chevron-right"></i>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>

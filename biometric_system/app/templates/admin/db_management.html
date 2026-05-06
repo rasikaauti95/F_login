@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}Database Management - Flogin{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-1">
+                <li class="breadcrumb-item"><a href="{{ url_for('admin.dashboard') }}">Dashboard</a></li>
+                <li class="breadcrumb-item active">Database Management</li>
+            </ol>
+        </nav>
+        <h2 class="fw-bold mb-0">Database Administration</h2>
+    </div>
+    <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline-secondary rounded-pill shadow-sm">
+        <i class="bi bi-arrow-left me-1"></i> Back to Dashboard
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0 rounded-4 mb-4">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0 fw-bold text-dark"><i class="bi bi-gear me-2 text-primary"></i> Maintenance Tools</h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    <div class="list-group-item py-4 border-0">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="me-3">
+                                <h6 class="fw-bold mb-1">Clear Attendance Records</h6>
+                                <p class="text-muted small mb-0">Delete all history logs from the attendance table. This action is irreversible.</p>
+                            </div>
+                            <button type="button" class="btn btn-outline-warning rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#clearAttendanceModal">
+                                Clear Logs
+                            </button>
+                        </div>
+                    </div>
+                    <div class="list-group-item py-4 border-0">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="me-3">
+                                <h6 class="fw-bold mb-1 text-danger">Reset System</h6>
+                                <p class="text-muted small mb-0">Delete all users (except yourself), face encodings, and attendance records. Factory reset.</p>
+                            </div>
+                            <button type="button" class="btn btn-outline-danger rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#resetSystemModal">
+                                Reset All
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card shadow-sm border-0 rounded-4 mb-4 bg-primary text-white">
+            <div class="card-header bg-transparent border-0 py-3">
+                <h5 class="mb-0 fw-bold"><i class="bi bi-info-circle me-2"></i> Database Stats</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="text-white-50 small d-block">Registered Users</label>
+                    <h3 class="fw-bold">{{ users_count }}</h3>
+                </div>
+                <div class="mb-3">
+                    <label class="text-white-50 small d-block">Attendance Records</label>
+                    <h3 class="fw-bold">{{ attendance_count }}</h3>
+                </div>
+                <hr class="bg-white bg-opacity-25">
+                <div class="small">
+                    <i class="bi bi-clock-history me-1"></i> Last backup: Never
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Clear Attendance -->
+<div class="modal fade" id="clearAttendanceModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold">Confirm Deletion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center py-4">
+                <i class="bi bi-exclamation-triangle text-warning display-1 mb-3"></i>
+                <p class="mb-0">Are you sure you want to clear <strong>all</strong> attendance records? This cannot be undone.</p>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                <form action="{{ url_for('admin.clear_attendance') }}" method="POST">
+                    <button type="submit" class="btn btn-warning rounded-pill px-4">Yes, Clear Records</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Reset System -->
+<div class="modal fade" id="resetSystemModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold text-danger">Factory Reset</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center py-4">
+                <i class="bi bi-radioactive text-danger display-1 mb-3"></i>
+                <p>This will delete <strong>ALL</strong> users, face encodings, and history.</p>
+                <p class="text-danger fw-bold">ONLY YOU WILL REMAIN IN THE SYSTEM.</p>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                <form action="{{ url_for('admin.reset_db') }}" method="POST">
+                    <button type="submit" class="btn btn-danger rounded-pill px-4">Wipe Everything</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

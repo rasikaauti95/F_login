@@ -1,8 +1,8 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app, session
 from flask_login import login_user, logout_user, current_user
-from app.models import User
+from app.models import User, Attendance
 import cv2
-from datetime import datetime
+from datetime import datetime, timedelta
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -160,4 +160,62 @@ def logout():
 def profile():
     if not current_user.is_authenticated:
         return redirect(url_for('auth.login'))
-    return render_template('profile.html', user=current_user)
+    
+    # Filtering parameters
+    time_range = request.args.get('range', 'all')
+    page = request.args.get('page', 1, type=int)
+    per_page = 10
+    
+    # Base query for attendance
+    query = Attendance.query.filter_by(user_id=current_user.id)
+    
+    # Apply time range filter
+    now = datetime.utcnow()
+    if time_range == '7days':
+        start_date = now - timedelta(days=7)
+        query = query.filter(Attendance.timestamp >= start_date)
+    elif time_range == '30days':
+        start_date = now - timedelta(days=30)
+        query = query.filter(Attendance.timestamp >= start_date)
+    
+    # Get paginated results
+    pagination = query.order_by(Attendance.timestamp.desc()).paginate(page=page, per_page=per_page)
+    attendance_records = pagination.items
+    
+    # Calculate metrics
+    total_logins = Attendance.query.filter_by(user_id=current_user.id).count()
+    
+    # Logins this week (from Monday)
+    start_of_week = now - timedelta(days=now.weekday())
+    start_of_week = start_of_week.replace(hour=0, minute=0, second=0, microsecond=0)
+    logins_this_week = Attendance.query.filter_by(user_id=current_user.id).filter(Attendance.timestamp >= start_of_week).count()
+    
+    # Dynamic Activity Status
+    from app import db
+    from sqlalchemy import func
+    
+    today = now.date()
+    attendance_today = Attendance.query.filter_by(user_id=current_user.id).filter(func.date(Attendance.timestamp) == today).first()
+    
+    if attendance_today:
+        activity_status = "Present Today"
+        status_class = "success"
+    else:
+        last_week = now - timedelta(days=7)
+        recent_login = Attendance.query.filter_by(user_id=current_user.id).filter(Attendance.timestamp >= last_week).first()
+        if recent_login:
+            activity_status = "Active"
+            status_class = "primary"
+        else:
+            activity_status = "Inactive"
+            status_class = "secondary"
+
+    return render_template('profile.html', 
+                           user=current_user, 
+                           attendance_records=attendance_records,
+                           pagination=pagination,
+                           time_range=time_range,
+                           total_logins=total_logins,
+                           logins_this_week=logins_this_week,
+                           activity_status=activity_status,
+                           status_class=status_class)

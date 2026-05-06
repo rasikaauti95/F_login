@@ -1,4 +1,4 @@
-# BioGate: Smart Biometric Attendance and Login System
+# Flogin: Smart Biometric Attendance and Login System
 
 A smart biometric attendance and login system for a college environment built with Flask, OpenCV, YOLOv8, and `face_recognition`.
 
